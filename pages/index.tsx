@@ -20,6 +20,7 @@ import {
   Tbody,
   Tfoot,
   calc,
+  Flex,
 } from "@chakra-ui/react"
 import axios from "axios"
 import { useState, useEffect } from "react"
@@ -99,36 +100,58 @@ export default function Home() {
   }
 
   return (
-    <VStack justifyContent="center">
-      <HStack alignItems="top">
-        {Object.keys(items).map((key) => {
-          const item = items[key] as Item
-          return (
-            <Box key={item.variationId}>
-              <Heading as="h2">{item.name}</Heading>
-              <Text>{item.description}</Text>
-              <Text>Price: ${(item.price as unknown as number) / 100}</Text>
-              <NumberInput
-                step={1}
-                min={0}
-                max={30}
-                value={quantities[item.variationId] || 0}
-                onChange={(event) => handleChange(event, item.variationId)}
-              >
-                <NumberInputField />
-                <NumberInputStepper>
-                  <NumberIncrementStepper />
-                  <NumberDecrementStepper />
-                </NumberInputStepper>
-              </NumberInput>
-            </Box>
-          )
-        })}
-      </HStack>
+    <HStack justifyContent="center">
+      <Flex alignItems="top">
+        <Table variant="simple">
+          <TableCaption fontWeight="bold" placement="top">
+            Item Selection
+          </TableCaption>
+          <Thead>
+            <Tr>
+              <Th>Item</Th>
+              <Th>Description</Th>
+              <Th>Price</Th>
+              <Th>Quantity</Th>
+            </Tr>
+          </Thead>
+          <Tbody>
+            {Object.keys(items).map((key) => {
+              const item = items[key] as Item
+              return (
+                <Tr key={item.variationId}>
+                  <Td>{item.name}</Td>
+                  <Td>{item.description}</Td>
+                  <Td isNumeric>${(item.price as unknown as number) / 100}</Td>
+                  <Td>
+                    <NumberInput
+                      width={20}
+                      step={1}
+                      min={0}
+                      max={30}
+                      value={quantities[item.variationId] || 0}
+                      onChange={(event) =>
+                        handleChange(event, item.variationId)
+                      }
+                    >
+                      <NumberInputField />
+                      <NumberInputStepper>
+                        <NumberIncrementStepper />
+                        <NumberDecrementStepper />
+                      </NumberInputStepper>
+                    </NumberInput>
+                  </Td>
+                </Tr>
+              )
+            })}
+          </Tbody>
+        </Table>
+      </Flex>
 
       <TableContainer>
         <Table variant="simple">
-          <TableCaption>Checkout Items</TableCaption>
+          <TableCaption fontWeight="bold" placement="top">
+            Checkout
+          </TableCaption>
           <Thead>
             <Tr>
               <Th>Item</Th>
@@ -159,7 +182,7 @@ export default function Home() {
           </Tbody>
         </Table>
       </TableContainer>
-    </VStack>
+    </HStack>
   )
 }
 
