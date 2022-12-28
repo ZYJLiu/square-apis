@@ -26,14 +26,15 @@ export default async function handler(
         sourceId: "EXTERNAL",
         idempotencyKey: randomUUID(),
         amountMoney: {
-          amount: 123,
+          amount: 400,
           currency: "USD",
         },
+        // orderId: "uQmaFNKSCVYym08Y2LOuzwAt6f4F",
         externalDetails: {
           type: "CRYPTO",
           source: "USDC",
           sourceFeeMoney: {
-            amount: 123,
+            amount: 400,
             currency: "USD",
           },
         },

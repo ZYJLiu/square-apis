@@ -28,6 +28,9 @@ const Navbar = () => {
           <MenuItem as={Link} href="/createOrder">
             Create Order
           </MenuItem>
+          <MenuItem as={Link} href="/makePayment">
+            Make Payment
+          </MenuItem>
         </MenuList>
       </Menu>
     </Flex>
