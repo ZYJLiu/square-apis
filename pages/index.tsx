@@ -31,7 +31,9 @@ export default function Home() {
   const [total, setTotal] = useState(0)
 
   const [resultOrder, setResultOrder] = useState<Order | null>(null)
-  const [orderId, setOrderId] = useState<string | null>(null)
+  const [orderDetail, setOrderDetail] = useState<OrderDetail | null>(null)
+
+  const [resultPayment, setResultPayment] = useState(null)
 
   async function fetchCatalog() {
     try {
@@ -104,12 +106,32 @@ export default function Home() {
     try {
       const { data } = await axios.post("/api/createOrderTest", { quantities })
       const orderId = data.order.id
+      const netAmountDueAmount = data.order.netAmountDueMoney.amount
       setResultOrder(data)
-      setOrderId(orderId)
+      setOrderDetail({ orderId, netAmountDueAmount })
     } catch (error) {
       console.error(error)
     }
   }
+
+  async function handlePayment() {
+    try {
+      // console.log(orderDetail)
+      // console.log(orderDetail?.netAmountDueAmount)
+      // console.log(orderDetail?.orderId)
+      const { data } = await axios.post("/api/makePaymentTest", {
+        orderDetail,
+      })
+      setResultPayment(data)
+    } catch (error) {
+      console.error(error)
+    }
+  }
+
+  // Run fetchCatalog when the component mounts
+  useEffect(() => {
+    handlePayment()
+  }, [orderDetail])
 
   return (
     <HStack alignItems="top" justifyContent="center">
@@ -199,16 +221,30 @@ export default function Home() {
           </Tbody>
         </Table>
       </TableContainer>
-      {resultOrder && (
+      {resultOrder && orderDetail && (
         <VStack>
-          <Text>Order ID: {orderId}</Text>
+          <Text>Order ID: {orderDetail?.orderId}</Text>
           <Code whiteSpace="pre" fontFamily="mono">
             {JSON.stringify(resultOrder, null, 2)}
           </Code>
         </VStack>
       )}
+
+      {resultPayment && (
+        <VStack>
+          <Text>Payment ID: {resultPayment.payment.id}</Text>
+          <Code whiteSpace="pre" fontFamily="mono">
+            {JSON.stringify(resultPayment, null, 2)}
+          </Code>
+        </VStack>
+      )}
     </HStack>
   )
+}
+
+type OrderDetail = {
+  orderId: string
+  netAmountDueAmount: string
 }
 
 // {result && <pre>Catalog result: {JSON.stringify(result, null, 2)}</pre>}
