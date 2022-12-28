@@ -1,4 +1,4 @@
-import { Button } from "@chakra-ui/react"
+import { Button, Flex, VStack } from "@chakra-ui/react"
 import axios from "axios"
 import { useState } from "react"
 
@@ -15,9 +15,9 @@ export default function Home() {
   }
 
   return (
-    <>
+    <VStack justifyContent="center">
       <Button onClick={handlePayment}>Make Payment</Button>
       {result && <pre>Payment result: {JSON.stringify(result, null, 2)}</pre>}
-    </>
+    </VStack>
   )
 }

@@ -22,22 +22,11 @@ export default async function handler(
 ) {
   if (req.method === "POST") {
     try {
-      const response = await client.paymentsApi.createPayment({
-        sourceId: "EXTERNAL",
-        idempotencyKey: randomUUID(),
-        amountMoney: {
-          amount: 123,
-          currency: "USD",
-        },
-        externalDetails: {
-          type: "CRYPTO",
-          source: "USDC",
-          sourceFeeMoney: {
-            amount: 123,
-            currency: "USD",
-          },
-        },
+      const response = await client.catalogApi.searchCatalogObjects({
+        objectTypes: ["ITEM"],
       })
+
+      console.log(response.result)
       console.log(response.result)
       res.status(200).json(response.result)
     } catch (error) {
