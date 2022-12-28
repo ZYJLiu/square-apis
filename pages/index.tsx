@@ -26,10 +26,6 @@ import { useState, useEffect } from "react"
 import dynamic from "next/dynamic"
 
 export default function Home() {
-  const DynamicTableWrapper = dynamic(() => Promise.resolve(TableWrapper), {
-    ssr: false,
-  })
-
   const [result, setResult] = useState<CatalogData | null>(null)
   const [quantities, setQuantities] = useState<{ [key: string]: number }>({})
   const [items, setItems] = useState<{ [key: string]: Item }>({})
@@ -63,7 +59,6 @@ export default function Home() {
       console.error(error)
     }
   }
-
   // Run fetchCatalog when the component mounts
   useEffect(() => {
     fetchCatalog()
@@ -84,15 +79,14 @@ export default function Home() {
     } else {
       setQuantities({ ...quantities, [id]: value })
     }
-
-    calculateTotal()
   }
 
   // Run fetchCatalog when the component mounts
   useEffect(() => {
     console.log(quantities)
     console.log(items)
-  }, [quantities, items])
+    calculateTotal()
+  }, [items])
 
   function calculateTotal() {
     let totalAmount = 0
@@ -103,42 +97,6 @@ export default function Home() {
     })
     setTotal(totalAmount)
   }
-
-  const TableWrapper = () => (
-    <TableContainer>
-      <Table variant="simple">
-        <TableCaption>Checkout Items</TableCaption>
-        <Thead>
-          <Tr>
-            <Th>Item</Th>
-            <Th>Quantity</Th>
-            <Th isNumeric>Amount</Th>
-          </Tr>
-        </Thead>
-        <Tbody>
-          {Object.values(items).map((item) => {
-            if (item.quantity > 0) {
-              return (
-                <Tr key={item.variationId}>
-                  <Td>{item.name}</Td>
-                  <Td>{item.quantity}</Td>
-                  <Td isNumeric>
-                    {(Number(item.price) * item.quantity) / 100}
-                  </Td>
-                </Tr>
-              )
-            }
-          })}
-          <Tr style={{ borderTopWidth: "4px", borderTopColor: "black" }}>
-            <Td colSpan={2} textAlign="right">
-              Total
-            </Td>
-            <Td isNumeric>{total}</Td>
-          </Tr>
-        </Tbody>
-      </Table>
-    </TableContainer>
-  )
 
   return (
     <VStack justifyContent="center">
@@ -168,7 +126,39 @@ export default function Home() {
         })}
       </HStack>
 
-      <DynamicTableWrapper />
+      <TableContainer>
+        <Table variant="simple">
+          <TableCaption>Checkout Items</TableCaption>
+          <Thead>
+            <Tr>
+              <Th>Item</Th>
+              <Th>Quantity</Th>
+              <Th isNumeric>Amount</Th>
+            </Tr>
+          </Thead>
+          <Tbody>
+            {Object.values(items).map((item) => {
+              if (item.quantity > 0) {
+                return (
+                  <Tr key={item.variationId}>
+                    <Td>{item.name}</Td>
+                    <Td>{item.quantity}</Td>
+                    <Td isNumeric>
+                      {(Number(item.price) * item.quantity) / 100}
+                    </Td>
+                  </Tr>
+                )
+              }
+            })}
+            <Tr style={{ borderTopWidth: "4px", borderTopColor: "black" }}>
+              <Td colSpan={2} textAlign="right">
+                Total
+              </Td>
+              <Td isNumeric>{total}</Td>
+            </Tr>
+          </Tbody>
+        </Table>
+      </TableContainer>
     </VStack>
   )
 }
