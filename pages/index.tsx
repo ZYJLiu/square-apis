@@ -18,19 +18,20 @@ import {
   Thead,
   Th,
   Tbody,
-  Tfoot,
-  calc,
   Flex,
+  Code,
 } from "@chakra-ui/react"
 import axios from "axios"
 import { useState, useEffect } from "react"
-import dynamic from "next/dynamic"
 
 export default function Home() {
   const [result, setResult] = useState<CatalogData | null>(null)
   const [quantities, setQuantities] = useState<{ [key: string]: number }>({})
   const [items, setItems] = useState<{ [key: string]: Item }>({})
   const [total, setTotal] = useState(0)
+
+  const [resultOrder, setResultOrder] = useState<Order | null>(null)
+  const [orderId, setOrderId] = useState<string | null>(null)
 
   async function fetchCatalog() {
     try {
@@ -99,9 +100,20 @@ export default function Home() {
     setTotal(totalAmount)
   }
 
+  async function handleCreateOrder() {
+    try {
+      const { data } = await axios.post("/api/createOrderTest", { quantities })
+      const orderId = data.order.id
+      setResultOrder(data)
+      setOrderId(orderId)
+    } catch (error) {
+      console.error(error)
+    }
+  }
+
   return (
-    <HStack justifyContent="center">
-      <Flex alignItems="top">
+    <HStack alignItems="top" justifyContent="center">
+      <VStack alignItems="top">
         <Table variant="simple">
           <TableCaption fontWeight="bold" placement="top">
             Item Selection
@@ -145,7 +157,7 @@ export default function Home() {
             })}
           </Tbody>
         </Table>
-      </Flex>
+      </VStack>
 
       <TableContainer>
         <Table variant="simple">
@@ -179,9 +191,22 @@ export default function Home() {
               </Td>
               <Td isNumeric>{total}</Td>
             </Tr>
+            <Tr>
+              <Td textAlign="center" colSpan={3}>
+                <Button onClick={handleCreateOrder}>Checkout</Button>
+              </Td>
+            </Tr>
           </Tbody>
         </Table>
       </TableContainer>
+      {resultOrder && (
+        <VStack>
+          <Text>Order ID: {orderId}</Text>
+          <Code whiteSpace="pre" fontFamily="mono">
+            {JSON.stringify(resultOrder, null, 2)}
+          </Code>
+        </VStack>
+      )}
     </HStack>
   )
 }
@@ -281,5 +306,98 @@ type ItemData = {
     imageIds: string[]
     descriptionHtml: string
     descriptionPlaintext: string
+  }
+}
+
+interface Order {
+  order: {
+    id: string
+    locationId: string
+    source: {
+      name: string
+    }
+    lineItems: {
+      uid: string
+      name: string
+      quantity: string
+      catalogObjectId: string
+      catalogVersion: string
+      variationName: string
+      itemType: string
+      basePriceMoney: {
+        amount: string
+        currency: string
+      }
+      variationTotalPriceMoney: {
+        amount: string
+        currency: string
+      }
+      grossSalesMoney: {
+        amount: string
+        currency: string
+      }
+      totalTaxMoney: {
+        amount: string
+        currency: string
+      }
+      totalDiscountMoney: {
+        amount: string
+        currency: string
+      }
+      totalMoney: {
+        amount: string
+        currency: string
+      }
+    }[]
+    netAmounts: {
+      totalMoney: {
+        amount: string
+        currency: string
+      }
+      taxMoney: {
+        amount: string
+        currency: string
+      }
+      discountMoney: {
+        amount: string
+        currency: string
+      }
+      tipMoney: {
+        amount: string
+        currency: string
+      }
+      serviceChargeMoney: {
+        amount: string
+        currency: string
+      }
+    }
+    createdAt: string
+    updatedAt: string
+    state: string
+    version: number
+    totalMoney: {
+      amount: string
+      currency: string
+    }
+    totalTaxMoney: {
+      amount: string
+      currency: string
+    }
+    totalDiscountMoney: {
+      amount: string
+      currency: string
+    }
+    totalTipMoney: {
+      amount: string
+      currency: string
+    }
+    totalServiceChargeMoney: {
+      amount: string
+      currency: string
+    }
+    netAmountDueMoney: {
+      amount: string
+      currency: string
+    }
   }
 }
