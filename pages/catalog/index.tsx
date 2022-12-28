@@ -5,7 +5,7 @@ import axios from "axios"
 export default function Catalog() {
   const [result, setResult] = useState<CatalogData | null>(null)
 
-  async function handlePayment() {
+  async function handleFetchCatalog() {
     try {
       const { data } = await axios.post("/api/fetchCatalog")
       setResult(data)
@@ -16,24 +16,26 @@ export default function Catalog() {
 
   return (
     <VStack justifyContent="center">
-      <Button onClick={handlePayment}>Fetch Catalog</Button>
+      <Button onClick={handleFetchCatalog}>Fetch Catalog</Button>
       <HStack alignItems="top">
         {result && <pre>Catalog result: {JSON.stringify(result, null, 2)}</pre>}
 
-        {result &&
-          result.objects.map((object) => (
-            <Box key={object.itemData.variations[0].id}>
-              <Heading as="h2">{object.itemData.name}</Heading>
-              <Text>{object.itemData.description}</Text>
-              <Text>
-                {
-                  object.itemData.variations[0].itemVariationData.priceMoney
-                    .amount
-                }
-              </Text>
-              <Text>{object.itemData.variations[0].id}</Text>
-            </Box>
-          ))}
+        <VStack>
+          {result &&
+            result.objects.map((object) => (
+              <Box key={object.itemData.variations[0].id}>
+                <Heading as="h2">{object.itemData.name}</Heading>
+                <Text>{object.itemData.description}</Text>
+                <Text>
+                  {
+                    object.itemData.variations[0].itemVariationData.priceMoney
+                      .amount
+                  }
+                </Text>
+                <Text>{object.itemData.variations[0].id}</Text>
+              </Box>
+            ))}
+        </VStack>
       </HStack>
     </VStack>
   )

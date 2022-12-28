@@ -25,6 +25,9 @@ const Navbar = () => {
           <MenuItem as={Link} href="/catalog">
             Catalog
           </MenuItem>
+          <MenuItem as={Link} href="/createOrder">
+            Create Order
+          </MenuItem>
         </MenuList>
       </Menu>
     </Flex>
