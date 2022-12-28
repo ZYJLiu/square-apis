@@ -10,17 +10,30 @@ import {
   NumberInputStepper,
   NumberIncrementStepper,
   NumberDecrementStepper,
+  TableContainer,
   Table,
   Tr,
   Td,
+  TableCaption,
+  Thead,
+  Th,
+  Tbody,
+  Tfoot,
+  calc,
 } from "@chakra-ui/react"
 import axios from "axios"
 import { useState, useEffect } from "react"
+import dynamic from "next/dynamic"
 
 export default function Home() {
+  const DynamicTableWrapper = dynamic(() => Promise.resolve(TableWrapper), {
+    ssr: false,
+  })
+
   const [result, setResult] = useState<CatalogData | null>(null)
   const [quantities, setQuantities] = useState<{ [key: string]: number }>({})
-  const [items, setItems] = useState<{ [key: string]: object }>({})
+  const [items, setItems] = useState<{ [key: string]: Item }>({})
+  const [total, setTotal] = useState(0)
 
   async function fetchCatalog() {
     try {
@@ -51,7 +64,6 @@ export default function Home() {
     }
   }
 
-  console.log(items)
   // Run fetchCatalog when the component mounts
   useEffect(() => {
     fetchCatalog()
@@ -59,6 +71,11 @@ export default function Home() {
 
   function handleChange(event: string, id: string) {
     const value = Number(event)
+    const updatedItems = { ...items }
+    updatedItems[id].quantity = value
+    setItems(updatedItems)
+    setQuantities({ ...quantities, [id]: value })
+
     if (value === 0) {
       // Remove the key from quantities
       const updatedQuantities = { ...quantities }
@@ -67,12 +84,61 @@ export default function Home() {
     } else {
       setQuantities({ ...quantities, [id]: value })
     }
+
+    calculateTotal()
   }
 
   // Run fetchCatalog when the component mounts
   useEffect(() => {
     console.log(quantities)
-  }, [quantities])
+    console.log(items)
+  }, [quantities, items])
+
+  function calculateTotal() {
+    let totalAmount = 0
+    Object.values(items).forEach((item) => {
+      if (item.quantity > 0) {
+        totalAmount += (Number(item.price) * item.quantity) / 100
+      }
+    })
+    setTotal(totalAmount)
+  }
+
+  const TableWrapper = () => (
+    <TableContainer>
+      <Table variant="simple">
+        <TableCaption>Checkout Items</TableCaption>
+        <Thead>
+          <Tr>
+            <Th>Item</Th>
+            <Th>Quantity</Th>
+            <Th isNumeric>Amount</Th>
+          </Tr>
+        </Thead>
+        <Tbody>
+          {Object.values(items).map((item) => {
+            if (item.quantity > 0) {
+              return (
+                <Tr key={item.variationId}>
+                  <Td>{item.name}</Td>
+                  <Td>{item.quantity}</Td>
+                  <Td isNumeric>
+                    {(Number(item.price) * item.quantity) / 100}
+                  </Td>
+                </Tr>
+              )
+            }
+          })}
+          <Tr style={{ borderTopWidth: "4px", borderTopColor: "black" }}>
+            <Td colSpan={2} textAlign="right">
+              Total
+            </Td>
+            <Td isNumeric>{total}</Td>
+          </Tr>
+        </Tbody>
+      </Table>
+    </TableContainer>
+  )
 
   return (
     <VStack justifyContent="center">
@@ -101,6 +167,8 @@ export default function Home() {
           )
         })}
       </HStack>
+
+      <DynamicTableWrapper />
     </VStack>
   )
 }
