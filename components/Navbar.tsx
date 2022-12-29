@@ -5,9 +5,11 @@ import {
   MenuItem,
   MenuList,
   IconButton,
+  Spacer,
 } from "@chakra-ui/react"
 import { HamburgerIcon } from "@chakra-ui/icons"
 import Link from "next/link"
+import WalletMultiButton from "./WalletMultiButton"
 
 const Navbar = () => {
   return (
@@ -33,6 +35,9 @@ const Navbar = () => {
           </MenuItem>
         </MenuList>
       </Menu>
+
+      <Spacer />
+      <WalletMultiButton />
     </Flex>
   )
 }

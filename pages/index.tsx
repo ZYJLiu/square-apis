@@ -20,11 +20,15 @@ import {
   Tbody,
   Flex,
   Code,
+  useDisclosure,
 } from "@chakra-ui/react"
 import axios from "axios"
 import { useState, useEffect } from "react"
+import QrModal from "../components/QrCodeTest"
 
 export default function Home() {
+  const { isOpen, onOpen, onClose } = useDisclosure()
+
   const [result, setResult] = useState<CatalogData | null>(null)
   const [quantities, setQuantities] = useState<{ [key: string]: number }>({})
   const [items, setItems] = useState<{ [key: string]: Item }>({})
@@ -33,7 +37,8 @@ export default function Home() {
   const [resultOrder, setResultOrder] = useState<Order | null>(null)
   const [orderDetail, setOrderDetail] = useState<OrderDetail | null>(null)
 
-  const [resultPayment, setResultPayment] = useState(null)
+  const [resultPayment, setResultPayment] = useState<Payment | null>(null)
+  const [confirmed, setConfirmed] = useState(false)
 
   async function fetchCatalog() {
     try {
@@ -129,116 +134,151 @@ export default function Home() {
   }
 
   // Run fetchCatalog when the component mounts
+  // useEffect(() => {
+  //   handlePayment()
+  // }, [orderDetail])
+
   useEffect(() => {
     handlePayment()
-  }, [orderDetail])
+  }, [confirmed])
 
   return (
-    <HStack alignItems="top" justifyContent="center">
-      <VStack alignItems="top">
-        <Table variant="simple">
-          <TableCaption fontWeight="bold" placement="top">
-            Item Selection
-          </TableCaption>
-          <Thead>
-            <Tr>
-              <Th>Item</Th>
-              <Th>Description</Th>
-              <Th>Price</Th>
-              <Th>Quantity</Th>
-            </Tr>
-          </Thead>
-          <Tbody>
-            {Object.keys(items).map((key) => {
-              const item = items[key] as Item
-              return (
-                <Tr key={item.variationId}>
-                  <Td>{item.name}</Td>
-                  <Td>{item.description}</Td>
-                  <Td isNumeric>${(item.price as unknown as number) / 100}</Td>
-                  <Td>
-                    <NumberInput
-                      width={20}
-                      step={1}
-                      min={0}
-                      max={30}
-                      value={quantities[item.variationId] || 0}
-                      onChange={(event) =>
-                        handleChange(event, item.variationId)
-                      }
-                    >
-                      <NumberInputField />
-                      <NumberInputStepper>
-                        <NumberIncrementStepper />
-                        <NumberDecrementStepper />
-                      </NumberInputStepper>
-                    </NumberInput>
-                  </Td>
-                </Tr>
-              )
-            })}
-          </Tbody>
-        </Table>
-      </VStack>
-
-      <TableContainer>
-        <Table variant="simple">
-          <TableCaption fontWeight="bold" placement="top">
-            Checkout
-          </TableCaption>
-          <Thead>
-            <Tr>
-              <Th>Item</Th>
-              <Th>Quantity</Th>
-              <Th isNumeric>Amount</Th>
-            </Tr>
-          </Thead>
-          <Tbody>
-            {Object.values(items).map((item) => {
-              if (item.quantity > 0) {
+    <VStack>
+      <HStack alignItems="top" justifyContent="center">
+        <VStack alignItems="top">
+          <Table variant="simple">
+            <TableCaption fontWeight="bold" placement="top">
+              Item Selection
+            </TableCaption>
+            <Thead>
+              <Tr>
+                <Th>Item</Th>
+                <Th>Description</Th>
+                <Th>Price</Th>
+                <Th>Quantity</Th>
+              </Tr>
+            </Thead>
+            <Tbody>
+              {Object.keys(items).map((key) => {
+                const item = items[key] as Item
                 return (
                   <Tr key={item.variationId}>
                     <Td>{item.name}</Td>
-                    <Td>{item.quantity}</Td>
+                    <Td>{item.description}</Td>
                     <Td isNumeric>
-                      {(Number(item.price) * item.quantity) / 100}
+                      ${(item.price as unknown as number) / 100}
+                    </Td>
+                    <Td>
+                      <NumberInput
+                        width={20}
+                        step={1}
+                        min={0}
+                        max={30}
+                        value={quantities[item.variationId] || 0}
+                        onChange={(event) =>
+                          handleChange(event, item.variationId)
+                        }
+                      >
+                        <NumberInputField />
+                        <NumberInputStepper>
+                          <NumberIncrementStepper />
+                          <NumberDecrementStepper />
+                        </NumberInputStepper>
+                      </NumberInput>
                     </Td>
                   </Tr>
                 )
-              }
-            })}
-            <Tr style={{ borderTopWidth: "4px", borderTopColor: "black" }}>
-              <Td colSpan={2} textAlign="right">
-                Total
-              </Td>
-              <Td isNumeric>{total}</Td>
-            </Tr>
-            <Tr>
-              <Td textAlign="center" colSpan={3}>
-                <Button onClick={handleCreateOrder}>Checkout</Button>
-              </Td>
-            </Tr>
-          </Tbody>
-        </Table>
-      </TableContainer>
-      {resultOrder && orderDetail && (
-        <VStack>
-          <Text>Order ID: {orderDetail?.orderId}</Text>
-          <Code whiteSpace="pre" fontFamily="mono">
-            {JSON.stringify(resultOrder, null, 2)}
-          </Code>
+              })}
+            </Tbody>
+          </Table>
         </VStack>
-      )}
 
-      {resultPayment && (
-        <VStack>
-          <Text>Payment ID: {resultPayment.payment.id}</Text>
-          <Code whiteSpace="pre" fontFamily="mono">
-            {JSON.stringify(resultPayment, null, 2)}
-          </Code>
-        </VStack>
-      )}
-    </HStack>
+        <TableContainer>
+          <Table variant="simple">
+            <TableCaption fontWeight="bold" placement="top">
+              Checkout
+            </TableCaption>
+            <Thead>
+              <Tr>
+                <Th>Item</Th>
+                <Th>Quantity</Th>
+                <Th isNumeric>Amount</Th>
+              </Tr>
+            </Thead>
+            <Tbody>
+              {Object.values(items).map((item) => {
+                if (item.quantity > 0) {
+                  return (
+                    <Tr key={item.variationId}>
+                      <Td>{item.name}</Td>
+                      <Td>{item.quantity}</Td>
+                      <Td isNumeric>
+                        {(Number(item.price) * item.quantity) / 100}
+                      </Td>
+                    </Tr>
+                  )
+                }
+              })}
+              <Tr style={{ borderTopWidth: "4px", borderTopColor: "black" }}>
+                <Td colSpan={2} textAlign="right">
+                  Total
+                </Td>
+                <Td isNumeric>{total}</Td>
+              </Tr>
+              <Tr>
+                <Td textAlign="center" colSpan={3}>
+                  <Button onClick={handleCreateOrder}>Checkout</Button>
+                </Td>
+              </Tr>
+              <Tr>
+                <Td textAlign="center" colSpan={3}>
+                  <Button
+                    onClick={() => {
+                      onOpen()
+                      handleCreateOrder()
+                    }}
+                  >
+                    Solana Pay
+                  </Button>
+                  {isOpen && (
+                    <QrModal
+                      onClose={() => {
+                        onClose()
+                        // setResultOrder(null)
+                        // setOrderDetail(null)
+                        // setResultPayment(null)
+                      }}
+                      value={total}
+                      confirmed={confirmed}
+                      setConfirmed={setConfirmed}
+                    />
+                  )}
+                </Td>
+              </Tr>
+            </Tbody>
+          </Table>
+        </TableContainer>
+      </HStack>
+      <HStack alignItems="top" justifyContent="center">
+        {resultOrder && orderDetail && (
+          <VStack>
+            <Text>Order ID: {orderDetail?.orderId}</Text>
+            <Code whiteSpace="pre" fontFamily="mono">
+              {JSON.stringify(resultOrder, null, 2)}
+            </Code>
+          </VStack>
+        )}
+
+        {resultPayment && (
+          <VStack>
+            <Text>Payment ID: {resultPayment.payment.id}</Text>
+            <Code whiteSpace="pre" fontFamily="mono">
+              {JSON.stringify(resultPayment, null, 2)}
+            </Code>
+          </VStack>
+        )}
+      </HStack>
+    </VStack>
   )
 }
 
@@ -435,5 +475,40 @@ interface Order {
       amount: string
       currency: string
     }
+  }
+}
+
+interface Payment {
+  payment: {
+    id: string
+    createdAt: string
+    amountMoney: {
+      amount: string
+      currency: string
+    }
+    totalMoney: {
+      amount: string
+      currency: string
+    }
+    status: string
+    sourceType: string
+    externalDetails: {
+      type: string
+      source: string
+      sourceFeeMoney: {
+        amount: string
+        currency: string
+      }
+    }
+    locationId: string
+    orderId: string
+    capabilities: string[]
+    receiptNumber: string
+    receiptUrl: string
+    applicationDetails: {
+      squareProduct: string
+      applicationId: string
+    }
+    versionToken: string
   }
 }
