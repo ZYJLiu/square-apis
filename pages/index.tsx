@@ -1,8 +1,6 @@
 import {
-  Box,
   Button,
   Text,
-  Heading,
   HStack,
   VStack,
   NumberInput,
@@ -25,13 +23,21 @@ import {
 import axios from "axios"
 import { useState, useEffect } from "react"
 import QrModal from "../components/QrCodeTest"
+import {
+  CatalogData,
+  Item,
+  ItemData,
+  Order,
+  OrderDetail,
+  Payment,
+} from "../utils/square"
 
 export default function Home() {
   const { isOpen, onOpen, onClose } = useDisclosure()
 
   const [result, setResult] = useState<CatalogData | null>(null)
-  const [quantities, setQuantities] = useState<{ [key: string]: number }>({})
   const [items, setItems] = useState<{ [key: string]: Item }>({})
+  const [quantities, setQuantities] = useState<{ [key: string]: number }>({})
   const [total, setTotal] = useState(0)
 
   const [resultOrder, setResultOrder] = useState<Order | null>(null)
@@ -139,8 +145,27 @@ export default function Home() {
   // }, [orderDetail])
 
   useEffect(() => {
-    handlePayment()
+    if (confirmed) {
+      handlePayment()
+    }
+    console.log(confirmed, "test")
   }, [confirmed])
+
+  const resetState = () => {
+    setResultOrder(null)
+    setOrderDetail(null)
+    setResultPayment(null)
+    setQuantities({})
+    setTotal(0)
+    const resetItems: { [key: string]: Item } = {}
+    Object.entries(items).forEach(([id, item]) => {
+      resetItems[id] = {
+        ...item,
+        quantity: 0,
+      }
+    })
+    setItems(resetItems)
+  }
 
   return (
     <VStack>
@@ -225,40 +250,48 @@ export default function Home() {
                 </Td>
                 <Td isNumeric>{total}</Td>
               </Tr>
-              <Tr>
+
+              {/* <Tr>
                 <Td textAlign="center" colSpan={3}>
                   <Button onClick={handleCreateOrder}>Checkout</Button>
                 </Td>
-              </Tr>
+              </Tr> */}
+
               <Tr>
                 <Td textAlign="center" colSpan={3}>
-                  <Button
-                    onClick={() => {
-                      onOpen()
-                      handleCreateOrder()
-                    }}
-                  >
-                    Solana Pay
-                  </Button>
-                  {isOpen && (
-                    <QrModal
-                      onClose={() => {
-                        onClose()
-                        // setResultOrder(null)
-                        // setOrderDetail(null)
-                        // setResultPayment(null)
+                  <VStack>
+                    <Button
+                      onClick={() => {
+                        onOpen()
+                        handleCreateOrder()
                       }}
-                      value={total}
-                      confirmed={confirmed}
-                      setConfirmed={setConfirmed}
-                    />
-                  )}
+                    >
+                      Solana Pay
+                    </Button>
+                    <Button onClick={resetState}>Reset</Button>
+                  </VStack>
                 </Td>
               </Tr>
             </Tbody>
           </Table>
         </TableContainer>
       </HStack>
+
+      {isOpen && (
+        <QrModal
+          onClose={() => {
+            onClose()
+            // setResultOrder(null)
+            // setOrderDetail(null)
+            // setResultPayment(null)
+          }}
+          // onClose={onClose}
+          value={total}
+          confirmed={confirmed}
+          setConfirmed={setConfirmed}
+        />
+      )}
+
       <HStack alignItems="top" justifyContent="center">
         {resultOrder && orderDetail && (
           <VStack>
@@ -281,234 +314,4 @@ export default function Home() {
     </VStack>
   )
 }
-
-type OrderDetail = {
-  orderId: string
-  netAmountDueAmount: string
-}
-
 // {result && <pre>Catalog result: {JSON.stringify(result, null, 2)}</pre>}
-interface CatalogData {
-  objects: {
-    type: string
-    id: string
-    updatedAt: string
-    version: string
-    isDeleted: boolean
-    presentAtAllLocations: boolean
-    itemData: {
-      name: string
-      description: string
-      labelColor: string
-      categoryId: string
-      variations: {
-        type: string
-        id: string
-        updatedAt: string
-        version: string
-        isDeleted: boolean
-        presentAtAllLocations: boolean
-        itemVariationData: {
-          itemId: string
-          name: string
-          sku: string
-          ordinal: number
-          pricingType: string
-          priceMoney: {
-            amount: string
-            currency: string
-          }
-          trackInventory: boolean
-          sellable: boolean
-          stockable: boolean
-        }
-      }[]
-      productType: string
-      skipModifierScreen: boolean
-      imageIds: string[]
-      descriptionHtml: string
-      descriptionPlaintext: string
-    }
-  }[]
-}
-
-interface Item {
-  id: string
-  name: string
-  description: string
-  variationId: string
-  price: string
-  quantity: number
-}
-
-type ItemData = {
-  type: string
-  id: string
-  updatedAt: string
-  version: string
-  isDeleted: boolean
-  presentAtAllLocations: boolean
-  itemData: {
-    name: string
-    description: string
-    labelColor: string
-    categoryId: string
-    variations: [
-      {
-        type: string
-        id: string
-        updatedAt: string
-        version: string
-        isDeleted: boolean
-        presentAtAllLocations: boolean
-        itemVariationData: {
-          itemId: string
-          name: string
-          sku: string
-          ordinal: number
-          pricingType: string
-          priceMoney: {
-            amount: string
-            currency: string
-          }
-          trackInventory: boolean
-          sellable: boolean
-          stockable: boolean
-        }
-      }
-    ]
-    productType: string
-    skipModifierScreen: boolean
-    imageIds: string[]
-    descriptionHtml: string
-    descriptionPlaintext: string
-  }
-}
-
-interface Order {
-  order: {
-    id: string
-    locationId: string
-    source: {
-      name: string
-    }
-    lineItems: {
-      uid: string
-      name: string
-      quantity: string
-      catalogObjectId: string
-      catalogVersion: string
-      variationName: string
-      itemType: string
-      basePriceMoney: {
-        amount: string
-        currency: string
-      }
-      variationTotalPriceMoney: {
-        amount: string
-        currency: string
-      }
-      grossSalesMoney: {
-        amount: string
-        currency: string
-      }
-      totalTaxMoney: {
-        amount: string
-        currency: string
-      }
-      totalDiscountMoney: {
-        amount: string
-        currency: string
-      }
-      totalMoney: {
-        amount: string
-        currency: string
-      }
-    }[]
-    netAmounts: {
-      totalMoney: {
-        amount: string
-        currency: string
-      }
-      taxMoney: {
-        amount: string
-        currency: string
-      }
-      discountMoney: {
-        amount: string
-        currency: string
-      }
-      tipMoney: {
-        amount: string
-        currency: string
-      }
-      serviceChargeMoney: {
-        amount: string
-        currency: string
-      }
-    }
-    createdAt: string
-    updatedAt: string
-    state: string
-    version: number
-    totalMoney: {
-      amount: string
-      currency: string
-    }
-    totalTaxMoney: {
-      amount: string
-      currency: string
-    }
-    totalDiscountMoney: {
-      amount: string
-      currency: string
-    }
-    totalTipMoney: {
-      amount: string
-      currency: string
-    }
-    totalServiceChargeMoney: {
-      amount: string
-      currency: string
-    }
-    netAmountDueMoney: {
-      amount: string
-      currency: string
-    }
-  }
-}
-
-interface Payment {
-  payment: {
-    id: string
-    createdAt: string
-    amountMoney: {
-      amount: string
-      currency: string
-    }
-    totalMoney: {
-      amount: string
-      currency: string
-    }
-    status: string
-    sourceType: string
-    externalDetails: {
-      type: string
-      source: string
-      sourceFeeMoney: {
-        amount: string
-        currency: string
-      }
-    }
-    locationId: string
-    orderId: string
-    capabilities: string[]
-    receiptNumber: string
-    receiptUrl: string
-    applicationDetails: {
-      squareProduct: string
-      applicationId: string
-    }
-    versionToken: string
-  }
-}

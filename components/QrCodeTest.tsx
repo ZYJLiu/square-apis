@@ -25,7 +25,7 @@ const QrModal = ({ onClose, setConfirmed, confirmed, value }: Props) => {
   // const [confirmed, setConfirmed] = useState(false)
   const connection = new Connection(clusterApiUrl("devnet"))
   const qrRef = useRef<HTMLDivElement>(null)
-  const [reference] = useState(Keypair.generate().publicKey)
+  const [reference, setReference] = useState(Keypair.generate().publicKey)
   const { publicKey } = useWallet()
 
   const [size, setSize] = useState(() =>
@@ -80,13 +80,15 @@ const QrModal = ({ onClose, setConfirmed, confirmed, value }: Props) => {
     updateData(publicKey, reference, value)
   }, [size, reference, publicKey])
 
-  async function checkTransaction() {
+  async function checkTransaction(interval: NodeJS.Timeout) {
     try {
       const signatureInfo = await findReference(connection, reference, {
         finality: "confirmed",
       })
       setConfirmed(true)
       updateData()
+      clearInterval(interval)
+      return
     } catch (e) {
       if (e instanceof FindReferenceError) return
       if (e instanceof ValidateTransferError) {
@@ -98,7 +100,10 @@ const QrModal = ({ onClose, setConfirmed, confirmed, value }: Props) => {
   }
 
   useEffect(() => {
-    const interval = setInterval(checkTransaction, 500)
+    const interval: NodeJS.Timeout = setInterval(
+      () => checkTransaction(interval),
+      1500
+    )
 
     return () => {
       clearInterval(interval)
