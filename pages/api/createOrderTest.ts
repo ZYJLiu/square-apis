@@ -37,6 +37,9 @@ export default async function handler(
           locationId: "LXGE2B07W8AH7",
           lineItems,
           state: "OPEN",
+          // pricingOptions: {
+          //   autoApplyTaxes: true,
+          // },
         },
         idempotencyKey: randomUUID(),
       })

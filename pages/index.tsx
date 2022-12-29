@@ -26,6 +26,7 @@ import QrModal from "../components/QrCodeTest"
 import {
   CatalogData,
   Item,
+  Items,
   ItemData,
   Order,
   OrderDetail,
@@ -51,17 +52,22 @@ export default function Home() {
       const { data } = await axios.post("/api/fetchCatalog")
       const itemsData = data.objects.reduce(
         (acc: { [key: string]: object }, item: ItemData) => {
-          const { id, itemData } = item
-          const { name, variations, description } = itemData
-          const variation = variations[0]
-          const { id: variationId, itemVariationData } = variation
-          const { priceMoney } = itemVariationData
+          const {
+            id,
+            itemData: { name, variations, description },
+          } = item
+          const {
+            id: variationId,
+            itemVariationData: {
+              priceMoney: { amount },
+            },
+          } = variations[0]
           acc[variationId] = {
             id,
             name,
             description,
             variationId,
-            price: priceMoney.amount,
+            price: amount,
             quantity: 0,
           }
           return acc
@@ -74,6 +80,7 @@ export default function Home() {
       console.error(error)
     }
   }
+
   // Run fetchCatalog when the component mounts
   useEffect(() => {
     fetchCatalog()
@@ -84,40 +91,41 @@ export default function Home() {
     const updatedItems = { ...items }
     updatedItems[id].quantity = value
     setItems(updatedItems)
-    setQuantities({ ...quantities, [id]: value })
 
+    // Update quantities with the new value or remove the key if value is 0
     if (value === 0) {
-      // Remove the key from quantities
-      const updatedQuantities = { ...quantities }
-      delete updatedQuantities[id]
+      const { [id]: removed, ...updatedQuantities } = quantities
       setQuantities(updatedQuantities)
     } else {
       setQuantities({ ...quantities, [id]: value })
     }
   }
 
-  // Run fetchCatalog when the component mounts
-  useEffect(() => {
-    console.log(quantities)
-    console.log(items)
-    calculateTotal()
-  }, [items])
-
   function calculateTotal() {
-    let totalAmount = 0
-    Object.values(items).forEach((item) => {
-      if (item.quantity > 0) {
-        totalAmount += (Number(item.price) * item.quantity) / 100
-      }
-    })
+    const totalAmount = Object.values(items).reduce((acc, item) => {
+      return item.quantity > 0
+        ? acc + (Number(item.price) * item.quantity) / 100
+        : acc
+    }, 0)
     setTotal(totalAmount)
   }
+
+  // Run fetchCatalog when the component mounts
+  useEffect(() => {
+    calculateTotal()
+    console.log(quantities)
+    console.log(items)
+  }, [items])
 
   async function handleCreateOrder() {
     try {
       const { data } = await axios.post("/api/createOrderTest", { quantities })
-      const orderId = data.order.id
-      const netAmountDueAmount = data.order.netAmountDueMoney.amount
+      const {
+        order: {
+          id: orderId,
+          netAmountDueMoney: { amount: netAmountDueAmount },
+        },
+      } = data
       setResultOrder(data)
       setOrderDetail({ orderId, netAmountDueAmount })
     } catch (error) {
@@ -127,29 +135,21 @@ export default function Home() {
 
   async function handlePayment() {
     try {
-      // console.log(orderDetail)
-      // console.log(orderDetail?.netAmountDueAmount)
-      // console.log(orderDetail?.orderId)
-      const { data } = await axios.post("/api/makePaymentTest", {
-        orderDetail,
-      })
+      const { data } = await axios.post("/api/makePaymentTest", { orderDetail })
       setResultPayment(data)
     } catch (error) {
       console.error(error)
     }
   }
 
+  useEffect(() => {
+    if (confirmed) handlePayment()
+  }, [confirmed])
+
   // Run fetchCatalog when the component mounts
   // useEffect(() => {
   //   handlePayment()
   // }, [orderDetail])
-
-  useEffect(() => {
-    if (confirmed) {
-      handlePayment()
-    }
-    console.log(confirmed, "test")
-  }, [confirmed])
 
   const resetState = () => {
     setResultOrder(null)
@@ -157,18 +157,20 @@ export default function Home() {
     setResultPayment(null)
     setQuantities({})
     setTotal(0)
-    const resetItems: { [key: string]: Item } = {}
-    Object.entries(items).forEach(([id, item]) => {
-      resetItems[id] = {
-        ...item,
-        quantity: 0,
-      }
-    })
+
+    const resetItems: Items = Object.entries(items).reduce(
+      (acc: Items, [id, item]) => {
+        acc[id] = { ...item, quantity: 0 }
+        return acc
+      },
+      {}
+    )
+
     setItems(resetItems)
   }
 
   return (
-    <VStack>
+    <VStack display="flex" width="100%">
       <HStack alignItems="top" justifyContent="center">
         <VStack alignItems="top">
           <Table variant="simple">
@@ -185,7 +187,7 @@ export default function Home() {
             </Thead>
             <Tbody>
               {Object.keys(items).map((key) => {
-                const item = items[key] as Item
+                const item: Item = items[key]
                 return (
                   <Tr key={item.variationId}>
                     <Td>{item.name}</Td>
@@ -250,13 +252,6 @@ export default function Home() {
                 </Td>
                 <Td isNumeric>{total}</Td>
               </Tr>
-
-              {/* <Tr>
-                <Td textAlign="center" colSpan={3}>
-                  <Button onClick={handleCreateOrder}>Checkout</Button>
-                </Td>
-              </Tr> */}
-
               <Tr>
                 <Td textAlign="center" colSpan={3}>
                   <VStack>
@@ -279,13 +274,7 @@ export default function Home() {
 
       {isOpen && (
         <QrModal
-          onClose={() => {
-            onClose()
-            // setResultOrder(null)
-            // setOrderDetail(null)
-            // setResultPayment(null)
-          }}
-          // onClose={onClose}
+          onClose={onClose}
           value={total}
           confirmed={confirmed}
           setConfirmed={setConfirmed}
@@ -314,4 +303,5 @@ export default function Home() {
     </VStack>
   )
 }
+
 // {result && <pre>Catalog result: {JSON.stringify(result, null, 2)}</pre>}

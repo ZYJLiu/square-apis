@@ -1,8 +1,3 @@
-export type OrderDetail = {
-  orderId: string
-  netAmountDueAmount: string
-}
-
 export interface CatalogData {
   objects: {
     type: string
@@ -55,6 +50,8 @@ export interface Item {
   price: string
   quantity: number
 }
+
+export type Items = { [key: string]: Item }
 
 export type ItemData = {
   type: string
@@ -191,6 +188,11 @@ export interface Order {
       currency: string
     }
   }
+}
+
+export type OrderDetail = {
+  orderId: string
+  netAmountDueAmount: string
 }
 
 export interface Payment {
