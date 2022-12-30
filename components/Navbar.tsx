@@ -24,6 +24,9 @@ const Navbar = () => {
           <MenuItem as={Link} href="/">
             Home
           </MenuItem>
+          <MenuItem as={Link} href="/oauth">
+            OAuth
+          </MenuItem>
           <MenuItem as={Link} href="/catalog">
             Catalog
           </MenuItem>
