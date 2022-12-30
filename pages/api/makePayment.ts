@@ -2,7 +2,7 @@
 import type { NextApiRequest, NextApiResponse } from "next"
 import { randomUUID } from "crypto"
 
-const { Client, Environment, ApiError } = require("square")
+import { Client, Environment } from "square"
 
 // Initialize the Square client with the access token and sandbox environment
 const client = new Client({

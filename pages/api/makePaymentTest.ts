@@ -1,8 +1,9 @@
 // Next.js API route support: https://nextjs.org/docs/api-routes/introduction
 import type { NextApiRequest, NextApiResponse } from "next"
 import { randomUUID } from "crypto"
+import { redis } from "../../utils/redis"
 
-const { Client, Environment, ApiError } = require("square")
+import { Client, Environment } from "square"
 
 // Initialize the Square client with the access token and sandbox environment
 const client = new Client({
@@ -32,8 +33,16 @@ export default async function handler(
       const {
         orderDetail: { netAmountDueAmount, orderId },
       } = req.body as RequestBody
-      console.log(netAmountDueAmount)
-      console.log(orderId)
+      // console.log(netAmountDueAmount)
+      // console.log(orderId)
+
+      const test = await redis.get("test")
+      console.log(test)
+
+      const client = new Client({
+        accessToken: test!,
+        environment: Environment.Sandbox,
+      })
 
       const response = await client.paymentsApi.createPayment({
         sourceId: "EXTERNAL",

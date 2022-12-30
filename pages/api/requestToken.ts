@@ -5,10 +5,9 @@ const md5 = require("md5")
 
 const scopes = [
   "ITEMS_READ",
-  // "MERCHANT_PROFILE_READ",
-  // "PAYMENTS_WRITE_ADDITIONAL_RECIPIENTS",
-  // "PAYMENTS_WRITE",
-  // "PAYMENTS_READ",
+  "MERCHANT_PROFILE_READ",
+  "PAYMENTS_WRITE",
+  "ORDERS_WRITE",
 ]
 
 export default async function handler(
