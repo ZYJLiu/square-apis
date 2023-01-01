@@ -41,23 +41,25 @@ export default async function handler(
       })
 
       const location = await client.locationsApi.listLocations()
-      const locationId = location.result.locations[0].id
+      if (location.result && location.result.locations) {
+        const locationId = location.result.locations[0].id
 
-      console.log(locationId)
-      const response = await client.ordersApi.createOrder({
-        order: {
-          locationId: locationId!,
-          lineItems,
-          state: "OPEN",
-          // pricingOptions: {
-          //   autoApplyTaxes: true,
-          // },
-        },
-        idempotencyKey: randomUUID(),
-      })
+        console.log(locationId)
+        const response = await client.ordersApi.createOrder({
+          order: {
+            locationId: locationId!,
+            lineItems,
+            state: "OPEN",
+            // pricingOptions: {
+            //   autoApplyTaxes: true,
+            // },
+          },
+          idempotencyKey: randomUUID(),
+        })
 
-      // console.log(response.result)
-      res.status(200).json(response.result)
+        // console.log(response.result)
+        res.status(200).json(response.result)
+      }
     } catch (error) {
       res.status(500).json({ error })
     }
